@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "yreconnect",
+  "version": "1.1.0",
+  "name": "YReconnect",
+  "description": "Auto-disconnect and reconnect when crossing a Y coordinate threshold.",
+  "authors": ["You"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.yreconnect.YReconnect"]
+  },
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "fabric-api": "*",
+    "minecraft": "~1.21.11",
+    "java": ">=21"
+  }
+}
