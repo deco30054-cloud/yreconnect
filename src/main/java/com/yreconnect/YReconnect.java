@@ -44,7 +44,7 @@ public class YReconnect implements ClientModInitializer {
                 triggered = true;
                 waitingToReconnect = true;
                 reconnectCountdown = cfg.reconnectDelayTicks;
-                client.world.disconnect();
+                client.world.disconnect(Text.literal("Reconnecting..."));
                 client.disconnect(Text.literal("Reconnecting via YReconnect"));
             }
         }
