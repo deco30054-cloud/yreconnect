@@ -4,7 +4,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 
 public class YReconnectConfigScreen extends Screen {
@@ -13,12 +12,7 @@ public class YReconnectConfigScreen extends Screen {
     private double triggerY;
     private boolean triggerAbove;
     private int reconnectDelayTicks;
-
-    private ButtonWidget enabledBtn;
-    private ButtonWidget directionBtn;
     private TextFieldWidget triggerYField;
-    private ButtonWidget delayDownBtn;
-    private ButtonWidget delayUpBtn;
 
     public YReconnectConfigScreen(Screen parent) {
         super(Text.literal("YReconnect Config"));
@@ -33,70 +27,56 @@ public class YReconnectConfigScreen extends Screen {
     @Override
     protected void init() {
         int cx = this.width / 2;
-        int y = 55;
-        int w = 200;
+        int y = 50;
 
-        // Enabled toggle
-        enabledBtn = ButtonWidget.builder(enabledText(), btn -> {
-            enabled = !enabled;
-            btn.setMessage(enabledText());
-        }).dimensions(cx - w / 2, y, w, 20).build();
-        this.addDrawableChild(enabledBtn);
+        addDrawableChild(ButtonWidget.builder(
+                Text.literal("Status: " + (enabled ? "§aON" : "§cOFF")),
+                btn -> { enabled = !enabled; btn.setMessage(Text.literal("Status: " + (enabled ? "§aON" : "§cOFF"))); }
+        ).dimensions(cx - 100, y, 200, 20).build());
 
-        // Direction toggle
-        directionBtn = ButtonWidget.builder(directionText(), btn -> {
-            triggerAbove = !triggerAbove;
-            btn.setMessage(directionText());
-        }).dimensions(cx - w / 2, y + 25, w, 20).build();
-        this.addDrawableChild(directionBtn);
+        addDrawableChild(ButtonWidget.builder(
+                Text.literal("Direction: " + (triggerAbove ? "§eAbove Y" : "§eBelow Y")),
+                btn -> { triggerAbove = !triggerAbove; btn.setMessage(Text.literal("Direction: " + (triggerAbove ? "§eAbove Y" : "§eBelow Y"))); }
+        ).dimensions(cx - 100, y + 25, 200, 20).build());
 
-        // Y value field
-        triggerYField = new TextFieldWidget(this.textRenderer, cx - w / 2, y + 55, w, 20, Text.literal("Trigger Y"));
+        triggerYField = new TextFieldWidget(textRenderer, cx - 100, y + 55, 200, 20, Text.literal("Y"));
         triggerYField.setMaxLength(10);
         triggerYField.setText(String.valueOf(triggerY));
-        triggerYField.setPlaceholder(Text.literal("e.g. -64 or 320"));
-        triggerYField.setChangedListener(text -> {
-            try { triggerY = Double.parseDouble(text); triggerYField.setEditableColor(0xFFFFFF); }
+        triggerYField.setChangedListener(t -> {
+            try { triggerY = Double.parseDouble(t); triggerYField.setEditableColor(0xFFFFFF); }
             catch (NumberFormatException e) { triggerYField.setEditableColor(0xFF4444); }
         });
-        this.addDrawableChild(triggerYField);
+        addDrawableChild(triggerYField);
 
-        // Delay controls
-        delayDownBtn = ButtonWidget.builder(Text.literal("< "), btn -> {
-            reconnectDelayTicks = Math.max(0, reconnectDelayTicks - 5);
-            updateDelayLabel();
-        }).dimensions(cx - w / 2, y + 85, 30, 20).build();
-        this.addDrawableChild(delayDownBtn);
+        addDrawableChild(ButtonWidget.builder(Text.literal("Delay: -5 ticks"),
+                btn -> { reconnectDelayTicks = Math.max(0, reconnectDelayTicks - 5); }
+        ).dimensions(cx - 100, y + 85, 95, 20).build());
 
-        delayUpBtn = ButtonWidget.builder(Text.literal(" >"), btn -> {
-            reconnectDelayTicks = Math.min(200, reconnectDelayTicks + 5);
-            updateDelayLabel();
-        }).dimensions(cx + w / 2 - 30, y + 85, 30, 20).build();
-        this.addDrawableChild(delayUpBtn);
+        addDrawableChild(ButtonWidget.builder(Text.literal("Delay: +5 ticks"),
+                btn -> { reconnectDelayTicks = Math.min(200, reconnectDelayTicks + 5); }
+        ).dimensions(cx + 5, y + 85, 95, 20).build());
 
-        // Presets
-        int pw = 58, pg = 4, py = y + 120;
-        int px = cx - (4 * pw + 3 * pg) / 2;
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Void"), btn -> applyPreset(-64, false)).dimensions(px, py, pw, 18).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Y<0"), btn -> applyPreset(0, false)).dimensions(px + pw + pg, py, pw, 18).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Y>256"), btn -> applyPreset(256, true)).dimensions(px + (pw + pg) * 2, py, pw, 18).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Y>320"), btn -> applyPreset(320, true)).dimensions(px + (pw + pg) * 3, py, pw, 18).build());
+        addDrawableChild(ButtonWidget.builder(Text.literal("Preset: Void (Y<-64)"),
+                btn -> setPreset(-64, false)).dimensions(cx - 100, y + 115, 200, 20).build());
 
-        // Save / Cancel
-        int by = this.height - 32;
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Save & Close"), btn -> saveAndClose()).dimensions(cx - 105, by, 100, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(ScreenTexts.CANCEL, btn -> closeWithoutSave()).dimensions(cx + 5, by, 100, 20).build());
+        addDrawableChild(ButtonWidget.builder(Text.literal("Preset: Y < 0"),
+                btn -> setPreset(0, false)).dimensions(cx - 100, y + 140, 200, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("Preset: Y > 256"),
+                btn -> setPreset(256, true)).dimensions(cx - 100, y + 165, 200, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("§aSave & Close"), btn -> saveAndClose())
+                .dimensions(cx - 100, this.height - 40, 95, 20).build());
+
+        addDrawableChild(ButtonWidget.builder(Text.literal("§cCancel"), btn -> closeScreen())
+                .dimensions(cx + 5, this.height - 40, 95, 20).build());
     }
 
-    private Text enabledText() { return Text.literal("Status: " + (enabled ? "§aEnabled" : "§cDisabled")); }
-    private Text directionText() { return Text.literal("Trigger: " + (triggerAbove ? "§eAbove Y" : "§eBelow Y")); }
-    private void updateDelayLabel() {}
-
-    private void applyPreset(double y, boolean above) {
-        triggerY = y; triggerAbove = above;
+    private void setPreset(double y, boolean above) {
+        triggerY = y;
+        triggerAbove = above;
         triggerYField.setText(String.valueOf(y));
-        triggerYField.setEditableColor(0xFFFFFF);
-        directionBtn.setMessage(directionText());
+        init();
     }
 
     private void saveAndClose() {
@@ -107,25 +87,25 @@ public class YReconnectConfigScreen extends Screen {
         cfg.triggerAbove = triggerAbove;
         cfg.reconnectDelayTicks = reconnectDelayTicks;
         YReconnectConfig.save();
-        if (this.client != null) this.client.setScreen(parent);
+        closeScreen();
     }
 
-    private void closeWithoutSave() { if (this.client != null) this.client.setScreen(parent); }
+    private void closeScreen() {
+        if (client != null) client.setScreen(parent);
+    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
-        int cx = this.width / 2;
-        context.fill(cx - 120, 40, cx + 120, 215, 0xAA000000);
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("§b⚡ §fYReconnect Config §b⚡"), cx, 26, 0xFFFFFF);
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("§7Trigger Y:"), cx, 112, 0xAAAAAA);
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(
-                String.format("§7Delay: §e%d ticks §7(%.1fs)", reconnectDelayTicks, reconnectDelayTicks / 20.0)),
-                cx, 142, 0xAAAAAA);
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("§7Presets:"), cx, 165, 0xAAAAAA);
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("§8Use /yreconnect config to reopen"), cx, this.height - 14, 0x666666);
         super.render(context, mouseX, mouseY, delta);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("§bYReconnect Config"), this.width / 2, 20, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.literal("§7Trigger Y:"), this.width / 2, 108, 0xAAAAAA);
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.literal(String.format("§7Delay: §e%d §7ticks (%.1fs)", reconnectDelayTicks, reconnectDelayTicks / 20.0)),
+                this.width / 2, 160, 0xAAAAAA);
     }
 
-    @Override public boolean shouldPause() { return false; }
+    @Override
+    public boolean shouldPause() { return false; }
+}
 }
