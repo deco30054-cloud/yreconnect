@@ -19,6 +19,7 @@ public class YReconnect implements ClientModInitializer {
     private static int reconnectCountdown = -1;
     private static boolean waitingToReconnect = false;
     private static boolean triggered = false;
+    private static int cooldownTicks = 0; // 5 second cooldown after joining
 
     @Override
     public void onInitializeClient() {
@@ -29,6 +30,12 @@ public class YReconnect implements ClientModInitializer {
     }
 
     private void onTick(MinecraftClient client) {
+        // Tick down the cooldown
+        if (cooldownTicks > 0) {
+            cooldownTicks--;
+            return;
+        }
+
         YReconnectConfig cfg = YReconnectConfig.get();
         if (cfg.enabled && client.player != null && client.world != null
                 && client.getCurrentServerEntry() != null && !waitingToReconnect && !triggered) {
@@ -48,6 +55,7 @@ public class YReconnect implements ClientModInitializer {
                 client.disconnect(Text.literal("Reconnecting via YReconnect"));
             }
         }
+
         if (waitingToReconnect) {
             reconnectCountdown--;
             if (reconnectCountdown <= 0) {
@@ -62,6 +70,7 @@ public class YReconnect implements ClientModInitializer {
     private void attemptReconnect(MinecraftClient client) {
         if (lastServerIp == null) return;
         LOGGER.info("[YReconnect] Reconnecting to {}:{}", lastServerIp, lastServerPort);
+        cooldownTicks = 100; // 5 second cooldown (100 ticks) before triggering again
         ServerAddress address = new ServerAddress(lastServerIp, lastServerPort);
         ServerInfo serverInfo = new ServerInfo("YReconnect", lastServerIp + ":" + lastServerPort, ServerInfo.ServerType.OTHER);
         ConnectScreen.connect(new TitleScreen(), client, address, serverInfo, false, null);
